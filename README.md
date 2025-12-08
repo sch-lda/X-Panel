@@ -11,7 +11,7 @@
 2. **克隆项目仓库**
 
    ```sh
-   git clone https://github.com/xeefei/x-panel.git
+   git clone https://github.com/sch-lda/x-panel.git
    cd x-panel
    ```
 
