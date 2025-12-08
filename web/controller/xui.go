@@ -30,9 +30,7 @@ func (a *XUIController) initRouter(g *gin.RouterGroup) {
 	g.GET("/inbounds", a.inbounds)
 	g.GET("/settings", a.settings)
 	g.GET("/xray", a.xraySettings)
-	g.GET("/navigation", a.navigation)
 
-                 // 【新增 2】注册页面路由
 	g.GET("/servers", a.serversPage)
 
 	a.inboundController = NewInboundController(g)
@@ -55,10 +53,6 @@ func (a *XUIController) settings(c *gin.Context) {
 
 func (a *XUIController) xraySettings(c *gin.Context) {
 	html(c, "xray.html", "pages.xray.title", nil)
-}
-
-func (a *XUIController) navigation(c *gin.Context) {
-	html(c, "navigation.html", "pages.navigation.title", nil)
 }
 
 // 【新增 4】添加页面渲染方法
