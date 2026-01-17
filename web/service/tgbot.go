@@ -572,7 +572,7 @@ func (t *Tgbot) answerCommand(message *telego.Message, chatId int64, isAdmin boo
 	case "oneclick":
 		onlyMessage = true
 		if isAdmin {
-			t.SendMsgToTgbot(chatId, "〔一键配置〕功能现已升级为“付费Pro版”专属功能，\n\n请联系面板管理员〔购买授权码〕之后才能继续使用，\n\n----->>> 面板管理员私聊机器人：@is_Chat_Bot")
+			t.SendMsgToTgbot(chatId, "〔一键配置〕功能现已升级为“付费Pro版”专属功能，\n\n请联系面板管理员〔购买授权码〕之后才能继续使用，\n\n----->>> “授权码购买”机器人：@Buy_ShouQuan_Bot")
 		} else {
 			handleUnknownCommand()
 		}
@@ -1990,7 +1990,7 @@ func (t *Tgbot) answerCallback(callbackQuery *telego.CallbackQuery, isAdmin bool
 	 case "oneclick_options":
 		 t.deleteMessageTgBot(chatId, callbackQuery.Message.GetMessageID())
 		 t.sendCallbackAnswerTgBot(callbackQuery.ID, "功能升级提示......")
-		 t.SendMsgToTgbot(chatId, "〔一键配置〕功能现已升级为“付费Pro版”专属功能，\n\n请联系面板管理员〔购买授权码〕之后才能继续使用，\n\n----->>> 面板管理员私聊机器人：@is_Chat_Bot")
+		 t.SendMsgToTgbot(chatId, "〔一键配置〕功能现已升级为“付费Pro版”专属功能，\n\n请联系面板管理员〔购买授权码〕之后才能继续使用，\n\n----->>> “授权码购买”机器人：@Buy_ShouQuan_Bot")
 
 	 case "subconverter_install":
 		 t.deleteMessageTgBot(chatId, callbackQuery.Message.GetMessageID())
@@ -2077,13 +2077,16 @@ https://gomami.io/aff.php?aff=174
 4、ISIF优质亚太优化线路：
 https://cloud.isif.net/login?affiliation_code=333
 
-5、Bagevm优质落地鸡（原生IP全解锁）：
+5、ZoroCloud全球优质原生家宽&住宅双lSP，跨境首选：
+https://my.zorocloud.com/aff.php?aff=1072
+
+6、Bagevm优质落地鸡（原生IP全解锁）：
 https://www.bagevm.com/aff.php?aff=754
 
-6、白丝云【4837线路】实惠量大管饱：
+7、白丝云【4837线路】实惠量大管饱：
 https://cloudsilk.io/aff.php?aff=706
 
-7、RackNerd极致性价比机器：
+8、RackNerd极致性价比机器：
 https://my.racknerd.com/aff.php?aff=15268&pid=912`
 		// 〔中文注释〕: 发送消息时禁用链接预览，使界面更整洁
 		params := tu.Message(

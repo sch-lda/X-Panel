@@ -6,7 +6,8 @@
 </a-modal>
 <script>
 
-    const inModal = {
+    // 将 inModal 设为全局可用，确保其在任何基础路径下都能工作
+    const inModal = window.inModal = {
         title: '',
         visible: false,
         confirmLoading: false,
@@ -26,6 +27,14 @@
             } else {
                 this.inbound = new Inbound();
             }
+            // 始终确保为 VLESS 协议初始化 testseed（即使尚未设置 vision 流）
+            // 这确保了 Vue 的响应式系统能正常工作
+            if (this.inbound.protocol === Protocols.VLESS && this.inbound.settings) {
+                if (!this.inbound.settings.testseed || !Array.isArray(this.inbound.settings.testseed) || this.inbound.settings.testseed.length < 4) {
+                    // 创建新数组以确保 Vue 响应式
+                    this.inbound.settings.testseed = [900, 500, 900, 256].slice();
+                }
+            }
             if (dbInbound) {
                 this.dbInbound = new DBInbound(dbInbound);
             } else {
@@ -42,9 +51,53 @@
         loading(loading = true) {
             inModal.confirmLoading = loading;
         },
+
+        // Vision Seed 方法 - 无论 Vue 上下文如何均可用
+        updateTestseed(index, value) {
+            if (!inModal.inbound || !inModal.inbound.settings) return;
+            if (!inModal.inbound.settings.testseed || !Array.isArray(inModal.inbound.settings.testseed)) {
+                inModal.inbound.settings.testseed = [900, 500, 900, 256];
+            }
+            while (inModal.inbound.settings.testseed.length <= index) {
+                inModal.inbound.settings.testseed.push(0);
+            }
+            inModal.inbound.settings.testseed[index] = value;
+        },
+
+         /**
+         * 优化后的随机 Vision Seed 生成函数 (inModal 全局对象版)
+         */
+        setRandomTestseed() {
+            // 确保对象存在
+            if (!inModal.inbound || !inModal.inbound.settings) return;
+
+            // 确保 testseed 已初始化为数组
+            if (!inModal.inbound.settings.testseed || !Array.isArray(inModal.inbound.settings.testseed) || inModal.inbound.settings.testseed.length < 4) {
+                inModal.inbound.settings.testseed = [900, 500, 900, 256].slice();
+            }
+
+            // 1. 生成 [0] 大包阈值 (500-1000)
+            let threshold = 500 + Math.floor(Math.random() * 501);
+            // 2. 生成 [1] 大包浮动 (0-500)
+            let largeVar = Math.floor(Math.random() * 501);
+            // 3. 生成 [2] 大包目标最低长度 (必须 >= threshold)
+            let targetLength = threshold + Math.floor(Math.random() * 201);
+            // 4. 生成 [3] 小包浮动 (0-300)
+            let smallVar = Math.floor(Math.random() * 301);
+
+            inModal.inbound.settings.testseed = [threshold, largeVar, targetLength, smallVar];
+        },
+
+        resetTestseed() {
+            if (!inModal.inbound || !inModal.inbound.settings) return;
+            inModal.inbound.settings.testseed = [900, 500, 900, 256].slice();
+        }
     };
 
-    new Vue({
+    // 全局存储 Vue 实例以确保方法始终可访问
+    let inboundModalVueInstance = null;
+    
+    inboundModalVueInstance = new Vue({
         delimiters: ['[[', ']]'],
         el: '#inbound-modal',
         data: {
@@ -60,7 +113,7 @@
                 return inModal.isEdit;
             },
             get client() {
-                return inModal.inbound.clients[0];
+                return inModal.inbound && inModal.inbound.clients && inModal.inbound.clients.length > 0 ? inModal.inbound.clients[0] : null;
             },
             get datepicker() {
                 return app.datepicker;
@@ -87,6 +140,30 @@
                 }
             }
         },
+
+        watch: {
+            'inModal.inbound.stream.security'(newVal, oldVal) {
+                // 当安全设置从 reality/tls 更改为 none 时清除 flow
+                if (inModal.inbound.protocol == Protocols.VLESS && !inModal.inbound.canEnableTlsFlow()) {
+                    inModal.inbound.settings.vlesses.forEach(client => {
+                        client.flow = "";
+                    });
+                }
+            },
+            // 确保启用 vision 流时始终初始化 testseed
+            'inModal.inbound.settings.vlesses': {
+                handler() {
+                    if (inModal.inbound.protocol === Protocols.VLESS && inModal.inbound.settings && inModal.inbound.settings.vlesses) {
+                        const hasVisionFlow = inModal.inbound.settings.vlesses.some(c => c.flow === 'xtls-rprx-vision' || c.flow === 'xtls-rprx-vision-udp443');
+                        if (hasVisionFlow && (!inModal.inbound.settings.testseed || !Array.isArray(inModal.inbound.settings.testseed) || inModal.inbound.settings.testseed.length < 4)) {
+                            inModal.inbound.settings.testseed = [900, 500, 900, 256];
+                        }
+                    }
+                },
+                deep: true
+            }
+        },
+
         methods: {
             streamNetworkChange() {
                 if (!inModal.inbound.canEnableTls()) {
@@ -184,6 +261,50 @@
             clearKeys() {
                 this.inbound.settings.decryption = 'none';
                 this.inbound.settings.encryption = '';
+            },
+            
+            // Vision Seed 方法 - 必须在 Vue methods 中以进行正确的绑定
+            updateTestseed(index, value) {
+                if (!this.inbound.settings.testseed || !Array.isArray(this.inbound.settings.testseed)) {
+                    this.$set(this.inbound.settings, 'testseed', [900, 500, 900, 256]);
+                }
+                while (this.inbound.settings.testseed.length <= index) {
+                    this.inbound.settings.testseed.push(0);
+                }
+                this.$set(this.inbound.settings.testseed, index, value);
+            },
+
+            /**
+             * 优化后的随机 Vision Seed 生成函数 (Vue 实例版)
+             */
+            setRandomTestseed() {
+                // 确保对象存在
+                if (!this.inbound || !this.inbound.settings) return;
+
+                // 1. 生成 [0] 大包阈值
+                // 建议范围：500 - 1000 (避免太小导致所有包都被当做大包)
+                let threshold = 500 + Math.floor(Math.random() * 501);
+
+                // 2. 生成 [1] 大包浮动
+                // 建议范围：0 - 500
+                let largeVar = Math.floor(Math.random() * 501);
+
+                // 3. 生成 [2] 大包目标最低长度
+                // 逻辑：必须 >= threshold。在 threshold 基础上增加 0-200 的随机量
+                // 这样永远保证 seed[2] >= seed[0]，避免内核逻辑崩溃
+                let targetLength = threshold + Math.floor(Math.random() * 201);
+
+                // 4. 生成 [3] 小包浮动
+                // 建议范围：0 - 300
+                let smallVar = Math.floor(Math.random() * 301);
+
+                // 使用 Vue.set 确保 UI 响应式更新
+                this.$set(this.inbound.settings, 'testseed', [threshold, largeVar, targetLength, smallVar]);
+            },
+
+            resetTestseed() {
+                // 使用 Vue.set 重置为默认值
+                this.$set(this.inbound.settings, 'testseed', [900, 500, 900, 256]);
             }
                 
         },

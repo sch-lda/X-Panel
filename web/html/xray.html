@@ -1346,7 +1346,8 @@
             newTemplateSettings.dns = {
               servers: [],
               queryStrategy: "UseIP",
-              tag: "dns_inbound"
+              tag: "dns_inbound",
+              enableParallelQuery: false
             };
             newTemplateSettings.fakedns = null;
           } else {
@@ -1418,6 +1419,20 @@
             newTemplateSettings.dns.disableFallbackIfMatch = newValue;
           } else {
             delete newTemplateSettings.dns.disableFallbackIfMatch
+          }
+          this.templateSettings = newTemplateSettings;
+        }
+      },
+      dnsEnableParallelQuery: {
+        get: function () {
+          return this.enableDNS ? (this.templateSettings.dns.enableParallelQuery || false) : false;
+        },
+        set: function (newValue) {
+          newTemplateSettings = this.templateSettings;
+          if (newValue) {
+            newTemplateSettings.dns.enableParallelQuery = newValue;
+          } else {
+            delete newTemplateSettings.dns.enableParallelQuery
           }
           this.templateSettings = newTemplateSettings;
         }

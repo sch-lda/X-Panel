@@ -184,7 +184,8 @@
         2、在此处添加的〔中转/落地机 VPS〕面板不能去开启“两步验证”，<br>
         3、在添加输入信息后，请点击列表中的“一键部署”按钮即可去使用，<br>
         4、而“中转/落地机”无需做任何设置，只需确保防火墙放行端口即可，<br>
-        5、最好不要连“本机节点”去用〔一键部署〕，因“Xray重启”会有卡顿。
+        5、最好不要连“本机节点”去用〔一键部署〕，因“Xray重启”会有卡顿，<br>
+        6、注：在已经创建好“中转节点”之后，勿去随意更改“用户Email + 端口”。
          </div>
 
     </a-modal>
@@ -454,11 +455,11 @@
                         
                         // 第三段：TG 链接（无需底部外边距）
                         h('p', { style: 'color: #ff4d4f; font-weight: bold; margin-bottom: 0;' }, [
-                            '----->>> 面板管理员私聊机器人：',
+                            '----->>> “授权码购买”机器人：',
                             h('a', { 
                                 // 设置跳转链接到 Telegram
                                 attrs: { 
-                                    href: 'https://t.me/is_Chat_Bot', 
+                                    href: 'https://t.me/Buy_ShouQuan_Bot', 
                                     target: '_blank' // 在新标签页打开
                                 }, 
                                 style: { 
@@ -466,7 +467,7 @@
                                     fontWeight: 'bold',
                                     textDecoration: 'underline' // 链接下划线
                                 } 
-                            }, '@is_Chat_Bot')
+                            }, '@Buy_ShouQuan_Bot')
                         ]),
                     ]),
                     onOk() {}
@@ -506,5 +507,7 @@
     });
 </script>
 {{ template "page/body_end" .}}
+
+
 
 

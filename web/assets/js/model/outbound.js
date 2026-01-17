@@ -164,7 +164,7 @@ class TcpStreamSettings extends CommonClass {
 
 class KcpStreamSettings extends CommonClass {
     constructor(
-        mtu = 1350,
+        mtu = 1250,
         tti = 50,
         uplinkCapacity = 5,
         downlinkCapacity = 20,
@@ -219,7 +219,7 @@ class KcpStreamSettings extends CommonClass {
 
 class WsStreamSettings extends CommonClass {
     constructor(
-        path = '/', 
+        path = '/',
         host = '',
         heartbeatPeriod = 0,
 
@@ -432,6 +432,7 @@ class SockoptStreamSettings extends CommonClass {
         tcpMptcp = false,
         penetrate = false,
         addressPortStrategy = Address_Port_Strategy.NONE,
+        trustedXForwardedFor = [],
     ) {
         super();
         this.dialerProxy = dialerProxy;
@@ -440,6 +441,7 @@ class SockoptStreamSettings extends CommonClass {
         this.tcpMptcp = tcpMptcp;
         this.penetrate = penetrate;
         this.addressPortStrategy = addressPortStrategy;
+        this.trustedXForwardedFor = trustedXForwardedFor;
     }
 
     static fromJson(json = {}) {
@@ -450,12 +452,13 @@ class SockoptStreamSettings extends CommonClass {
             json.tcpKeepAliveInterval,
             json.tcpMptcp,
             json.penetrate,
-            json.addressPortStrategy
+            json.addressPortStrategy,
+            json.trustedXForwardedFor || []
         );
     }
 
     toJson() {
-        return {
+        const result = {
             dialerProxy: this.dialerProxy,
             tcpFastOpen: this.tcpFastOpen,
             tcpKeepAliveInterval: this.tcpKeepAliveInterval,
@@ -463,6 +466,10 @@ class SockoptStreamSettings extends CommonClass {
             penetrate: this.penetrate,
             addressPortStrategy: this.addressPortStrategy
         };
+        if (this.trustedXForwardedFor && this.trustedXForwardedFor.length > 0) {
+            result.trustedXForwardedFor = this.trustedXForwardedFor;
+        }
+        return result;
     }
 }
 
@@ -614,6 +621,13 @@ class Outbound extends CommonClass {
         return false;
     }
 
+    // Vision seed applies only when vision flow is selected
+    canEnableVisionSeed() {
+        if (!this.canEnableTlsFlow()) return false;
+        const flow = this.settings?.flow;
+        return flow === TLS_FLOW_CONTROL.VISION || flow === TLS_FLOW_CONTROL.VISION_UDP443;
+    }
+
     canEnableReality() {
         if (![Protocols.VLESS, Protocols.Trojan].includes(this.protocol)) return false;
         return ["tcp", "http", "grpc", "xhttp"].includes(this.stream.network);
@@ -645,10 +659,6 @@ class Outbound extends CommonClass {
             Protocols.HTTP,
             Protocols.Socks
         ].includes(this.protocol);
-    }
-
-    hasVnext() {
-        return [Protocols.VMess, Protocols.VLESS].includes(this.protocol);
     }
 
     hasServers() {
@@ -690,13 +700,15 @@ class Outbound extends CommonClass {
             if (this.stream?.sockopt)
                 stream = { sockopt: this.stream.sockopt.toJson() };
         }
+        let settingsOut = this.settings instanceof CommonClass ? this.settings.toJson() : this.settings;
         return {
-            tag: this.tag == '' ? undefined : this.tag,
             protocol: this.protocol,
-            settings: this.settings instanceof CommonClass ? this.settings.toJson() : this.settings,
-            streamSettings: stream,
-            sendThrough: this.sendThrough != "" ? this.sendThrough : undefined,
-            mux: this.mux?.enabled ? this.mux : undefined,
+            settings: settingsOut,
+            // Only include tag, streamSettings, sendThrough, mux if present and not empty
+            ...(this.tag ? { tag: this.tag } : {}),
+            ...(stream ? { streamSettings: stream } : {}),
+            ...(this.sendThrough ? { sendThrough: this.sendThrough } : {}),
+            ...(this.mux?.enabled ? { mux: this.mux } : {}),
         };
     }
 
@@ -908,7 +920,7 @@ Outbound.FreedomSettings = class extends CommonClass {
     toJson() {
         return {
             domainStrategy: ObjectUtil.isEmpty(this.domainStrategy) ? undefined : this.domainStrategy,
-            redirect: ObjectUtil.isEmpty(this.redirect) ? undefined: this.redirect,
+            redirect: ObjectUtil.isEmpty(this.redirect) ? undefined : this.redirect,
             fragment: Object.keys(this.fragment).length === 0 ? undefined : this.fragment,
             noises: this.noises.length === 0 ? undefined : Outbound.FreedomSettings.Noise.toJsonArray(this.noises),
         };
@@ -1026,13 +1038,16 @@ Outbound.VmessSettings = class extends CommonClass {
     }
 
     static fromJson(json = {}) {
-        if (ObjectUtil.isArrEmpty(json.vnext)) return new Outbound.VmessSettings();
-        return new Outbound.VmessSettings(
-            json.vnext[0].address,
-            json.vnext[0].port,
-            json.vnext[0].users[0].id,
-            json.vnext[0].users[0].security,
-        );
+        if (!ObjectUtil.isArrEmpty(json.vnext)) {
+            const v = json.vnext[0] || {};
+            const u = ObjectUtil.isArrEmpty(v.users) ? {} : v.users[0];
+            return new Outbound.VmessSettings(
+                v.address,
+                v.port,
+                u.id,
+                u.security,
+            );
+        }
     }
 
     toJson() {
@@ -1040,40 +1055,54 @@ Outbound.VmessSettings = class extends CommonClass {
             vnext: [{
                 address: this.address,
                 port: this.port,
-                users: [{ id: this.id, security: this.security }],
-            }],
+                users: [{
+                    id: this.id,
+                    security: this.security
+                }]
+            }]
         };
     }
 };
 Outbound.VLESSSettings = class extends CommonClass {
-    constructor(address, port, id, flow, encryption) {
+    constructor(address, port, id, flow, encryption, testpre = 0, testseed = [900, 500, 900, 256]) {
         super();
         this.address = address;
         this.port = port;
         this.id = id;
         this.flow = flow;
         this.encryption = encryption;
+        this.testpre = testpre;
+        this.testseed = testseed;
     }
 
     static fromJson(json = {}) {
-        if (ObjectUtil.isArrEmpty(json.vnext)) return new Outbound.VLESSSettings();
+        if (ObjectUtil.isEmpty(json.address) || ObjectUtil.isEmpty(json.port)) return new Outbound.VLESSSettings();
         return new Outbound.VLESSSettings(
-            json.vnext[0].address,
-            json.vnext[0].port,
-            json.vnext[0].users[0].id,
-            json.vnext[0].users[0].flow,
-            json.vnext[0].users[0].encryption,
+            json.address,
+            json.port,
+            json.id,
+            json.flow,
+            json.encryption,
+            json.testpre || 0,
+            json.testseed && json.testseed.length >= 4 ? json.testseed : [900, 500, 900, 256]
         );
     }
 
     toJson() {
-        return {
-            vnext: [{
-                address: this.address,
-                port: this.port,
-                users: [{ id: this.id, flow: this.flow, encryption: this.encryption }],
-            }],
+        const result = {
+            address: this.address,
+            port: this.port,
+            id: this.id,
+            flow: this.flow,
+            encryption: this.encryption,
         };
+        if (this.testpre > 0) {
+            result.testpre = this.testpre;
+        }
+        if (this.testseed && this.testseed.length >= 4) {
+            result.testseed = this.testseed;
+        }
+        return result;
     }
 };
 Outbound.TrojanSettings = class extends CommonClass {
@@ -1204,7 +1233,7 @@ Outbound.HttpSettings = class extends CommonClass {
 
 Outbound.WireguardSettings = class extends CommonClass {
     constructor(
-        mtu = 1420,
+        mtu = 1250,
         secretKey = '',
         address = [''],
         workers = 2,

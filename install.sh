@@ -78,7 +78,7 @@ install_paid_version() {
     echo ""
     
     # 4. 设置您的授权服务器地址
-    AUTH_SERVER_URL="https://auth.wudust.top/install_pro.php"
+    AUTH_SERVER_URL="https://auth.x-panel.vip/install_pro.php"
     
     echo -e "${green}正在连接〔远程授权服务器〕进行验证......${plain}"
     echo ""
@@ -566,11 +566,13 @@ install_free_version() {
     echo ""
     echo -e "${green}4、ISIF优质亚太优化线路：${yellow}https://cloud.isif.net/login?affiliation_code=333${plain}"
     echo ""
-    echo -e "${green}5、Bagevm优质落地鸡（原生IP全解锁）：${yellow}https://www.bagevm.com/aff.php?aff=754${plain}"
+    echo -e "${green}5、ZoroCloud全球优质原生家宽&住宅双lSP，跨境首选：${yellow}https://my.zorocloud.com/aff.php?aff=1072${plain}"
     echo ""
-    echo -e "${green}6、白丝云〔4837线路〕实惠量大管饱：${yellow}https://cloudsilk.io/aff.php?aff=706${plain}"
+    echo -e "${green}6、Bagevm优质落地鸡（原生IP全解锁）：${yellow}https://www.bagevm.com/aff.php?aff=754${plain}"
     echo ""
-    echo -e "${green}7、RackNerd极致性价比机器：${yellow}https://my.racknerd.com/aff.php?aff=15268&pid=912${plain}"
+    echo -e "${green}7、白丝云〔4837线路〕实惠量大管饱：${yellow}https://cloudsilk.io/aff.php?aff=706${plain}"
+    echo ""
+    echo -e "${green}8、RackNerd极致性价比机器：${yellow}https://my.racknerd.com/aff.php?aff=15268&pid=912${plain}"
     echo ""
     echo -e "----------------------------------------------"
     echo ""
