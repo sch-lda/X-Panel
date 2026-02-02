@@ -54,8 +54,3 @@ func (a *XUIController) settings(c *gin.Context) {
 func (a *XUIController) xraySettings(c *gin.Context) {
 	html(c, "xray.html", "pages.xray.title", nil)
 }
-
-// 【新增 4】添加页面渲染方法
-func (a *XUIController) serversPage(c *gin.Context) {
-	html(c, "servers.html", "pages.controlledmanagement.title", nil)
-}
