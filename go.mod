@@ -1,6 +1,6 @@
 module x-ui
 
-go 1.25.5
+go 1.25.6
 
 replace gvisor.dev/gvisor => gvisor.dev/gvisor v0.0.0-20260109181451-4be7c433dae2
 
@@ -19,7 +19,7 @@ require (
 	github.com/shirou/gopsutil/v4 v4.25.12
 	github.com/valyala/fasthttp v1.69.0
 	github.com/xlzd/gotp v0.1.0
-	github.com/xtls/xray-core v1.260113.0
+	github.com/xtls/xray-core v1.260118.0
 	go.uber.org/atomic v1.11.0
 	golang.org/x/crypto v0.47.0
 	golang.org/x/text v0.33.0
@@ -98,6 +98,6 @@ require (
 	golang.zx2c4.com/wireguard v0.0.0-20250521234502-f333402bd9cb // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260114163908-3f89685c29c3 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
-	gvisor.dev/gvisor v0.0.0-20260109181451-4be7c433dae2 // indirect
+	gvisor.dev/gvisor v0.0.0-20260117033839-509480e92861 // indirect
 	lukechampine.com/blake3 v1.4.1 // indirect
 )

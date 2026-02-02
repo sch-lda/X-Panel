@@ -516,6 +516,14 @@
 											<a-space direction="horizontal" @click="openConfig" :style="{ justifyContent: 'center' }">
 												<a-icon type="control"></a-icon><span v-if="!isMobile">{{ i18n "pages.index.config" }}</span>
 											</a-space>
+
+											<a-space direction="horizontal" @click="performRemoteBackup" :style="{ justifyContent: 'center' }">
+                                                                                                                                                                                                           <a-icon type="cloud-upload"></a-icon><span v-if="!isMobile">{{ i18n "pages.index.datasnapshot" }}</span>
+											</a-space>
+											<a-space direction="horizontal" @click="performRemoteRestore" :style="{ justifyContent: 'center' }">
+												<a-icon type="medicine-box"></a-icon><span v-if="!isMobile">{{ i18n "pages.index.emergencyrecovery" }}</span>
+											</a-space>
+
 											<a-space direction="horizontal" @click="openBackup" :style="{ justifyContent: 'center' }">
 												<a-icon type="cloud-server"></a-icon><span v-if="!isMobile">{{ i18n "pages.index.backup" }}</span>
 											</a-space>
@@ -1160,6 +1168,55 @@ ${dateTime}
                 }
                 txtModal.show('config.json', JSON.stringify(msg.obj, null, 2), 'config.json');
             },
+
+            // 按钮 1 触发的方法：显示付费提示
+            async performRemoteBackup() {
+                // 注意：这里删除了 this.visible = false，因为在主页上下文中没有弹窗需要关闭，直接弹警告即可
+                
+                // 使用 Vue 的 createElement 函数构建支持 HTML 的提示内容
+                const h = this.$createElement;
+                
+                // 弹出警告提示框
+                this.$warning({
+                    title: '功能受限提示',
+                    okText: '知道了',
+                    // 【核心修改点 1】：调整弹窗宽度，使其足够容纳一行文字
+                    width: 580, 
+                    // 这里定义提示框的具体内容和样式
+                    content: h('div', { style: 'margin-top: 10px; font-size: 15px; line-height: 1.6;' }, [ // 增加行高，提升阅读体验
+                        
+                        // 第一段：设置底部外边距，模拟空行
+                        h('p', { style: 'margin-bottom: 15px;' }, '此项功能是“付费Pro版”专属功能，免费版不能用，'), 
+                        
+                        // 第二段：设置底部外边距，模拟空行
+                        h('p', { style: 'margin-bottom: 15px;' }, '请联系面板管理员〔购买授权码〕之后才能继续使用。'), 
+                        
+                        // 第三段：TG 链接（无需底部外边距）
+                        h('p', { style: 'color: #ff4d4f; font-weight: bold; margin-bottom: 0;' }, [
+                            '----->>> “授权码购买”机器人：',
+                            h('a', { 
+                                // 设置跳转链接到 Telegram
+                                attrs: { 
+                                    href: 'https://t.me/Buy_ShouQuan_Bot', 
+                                    target: '_blank' // 在新标签页打开
+                                }, 
+                                style: { 
+                                    color: '#1890ff', // 链接颜色
+                                    fontWeight: 'bold',
+                                    textDecoration: 'underline' // 链接下划线
+                                } 
+                            }, '@Buy_ShouQuan_Bot')
+                        ]),
+                    ]),
+                    onOk() {}
+                });
+            },
+
+            // 按钮 2 触发的方法：显示相同的提示
+            async performRemoteRestore() {
+                 this.performRemoteBackup();
+            },
+
             openBackup() {
               backupModal.show();
             },

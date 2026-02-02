@@ -145,9 +145,9 @@
 "config" = "設定"
 "backup" = "備份與還原"
 "backupTitle" = "備份與還原資料庫"
-"exportDatabase" = "備份"
+"exportDatabase" = "本地備份"
 "exportDatabaseDesc" = "點擊下載包含目前資料庫備份的 .db 檔案到您的裝置。"
-"importDatabase" = "還原"
+"importDatabase" = "本地還原"
 "importDatabaseDesc" = "點擊選擇並上傳裝置中的 .db 檔案以從備份還原資料庫。"
 "importDatabaseSuccess" = "資料庫匯入成功"
 "importDatabaseError" = "匯入資料庫時發生錯誤"
@@ -161,6 +161,8 @@
 "tgGroupChat" = "〔X-Panel面板〕交流群"
 "portCheck" = "連接埠偵測"
 "speedTest" = "網路測速"
+"datasnapshot" = "建立資料快照"
+"emergencyrecovery" = "遠端急救還原"
 
 [pages.inbounds]
 "allTimeTraffic" = "累計總流量"
