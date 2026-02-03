@@ -757,6 +757,58 @@
 		</a-form>
 		<div class="ant-input" :style="{ height: 'auto', maxHeight: '500px', overflow: 'auto', marginTop: '0.5rem' }" v-html="xraylogModal.formattedLogs"></div>
 	</a-modal>
+
+<a-modal id="welcome-modal"
+        v-model="welcomeModal.visible"
+        :title="null" 
+        :footer="null"
+        :closable="false"
+        :mask-closable="false"
+        width="450px"
+        :class="themeSwitcher.currentTheme"
+        style="text-align: center;">
+        
+        <div style="padding: 20px 10px;">
+            <div style="font-size: 24px; font-weight: bold; margin-bottom: 10px; color: #52c41a;">
+                <a-icon type="smile" theme="filled" style="margin-right: 8px;"></a-icon>
+                <span>X-Panel 免费基础版</span>
+            </div>
+
+            <a-divider style="margin: 15px 0;"></a-divider>
+
+            <p style="font-size: 16px; color: #1890ff; font-style: italic; font-weight: 500;">
+                * 美好的一天，从〔X-Panel 面板〕开始！*
+            </p>
+            <p style="font-size: 14px; color: #666;">
+                你当前所使用的版本为：<b>免费基础版</b>
+            </p>
+
+            <div style="background: rgba(0,0,0,0.03); padding: 15px; border-radius: 8px; margin: 20px 0; text-align: left;">
+                
+                <p style="color: #ff4d4f; font-weight: bold; margin-bottom: 15px;">
+                    如需要使用〔Pro 版〕请联系“授权码购买”机器人：
+                    <br>
+                    <a href="https://t.me/Buy_ShouQuan_Bot" target="_blank" style="color: #1890ff; font-weight: bold; text-decoration: underline; margin-left: 10px;">
+                        @Buy_ShouQuan_Bot
+                    </a>
+                </p>
+
+                <a-divider style="margin: 10px 0;"></a-divider>
+
+                <div style="font-size: 14px;">
+                    <a-icon type="rocket" style="margin-right: 5px;"></a-icon>
+                    〔X-Panel-Pro 面板〕已实现功能：
+                    <a @click="jumpToProFeatures" style="font-weight: bold; color: #722ed1;">
+                        点击查看 <a-icon type="right"></a-icon>
+                    </a>
+                </div>
+            </div>
+
+            <a-button type="primary" shape="round" size="large" block @click="closeWelcomeModal">
+                进入面板
+            </a-button>
+        </div>
+    </a-modal>
 	<a-modal id="backup-modal"
 		v-model="backupModal.visible"
 		title='{{ i18n "pages.index.backupTitle" }}'
@@ -1038,6 +1090,11 @@ ${dateTime}
               fetched: false,
               spinning: false
             },
+
+            // 新增 welcomeModal 数据对象
+            welcomeModal: {
+                visible: false
+            },
             status: new Status(),
             versionModal,
             logModal,
@@ -1201,6 +1258,12 @@ ${dateTime}
             },
         },
         async mounted() {
+
+            // 页面加载完成后，检查是否显示过欢迎弹窗
+            const hasShown = sessionStorage.getItem('welcomeShown');
+            if (!hasShown) {
+                this.welcomeModal.visible = true;
+            }
             if (window.location.protocol !== "https:") {
                 this.showAlert = true;
             }

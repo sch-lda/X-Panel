@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -364,7 +365,7 @@ func (s *ServerService) GetXrayVersions() ([]string, error) {
 			continue
 		}
 
-		if major > 26 || (major == 26 && minor > 1) || (major == 26 && minor == 1 && patch >= 18) {
+		if major > 26 || (major == 26 && minor > 1) || (major == 26 && minor == 1 && patch >= 31) {
 			versions = append(versions, release.TagName)
 		}
 	}
@@ -756,6 +757,35 @@ func (s *ServerService) ImportDB(file multipart.File) error {
 	return nil
 }
 
+// IsValidGeofileName validates that the filename is safe for geofile operations.
+// It checks for path traversal attempts and ensures the filename contains only safe characters.
+func (s *ServerService) IsValidGeofileName(filename string) bool {
+	if filename == "" {
+		return false
+	}
+
+	// Check for path traversal attempts
+	if strings.Contains(filename, "..") {
+		return false
+	}
+
+	// Check for path separators (both forward and backward slash)
+	if strings.ContainsAny(filename, `/\`) {
+		return false
+	}
+
+	// Check for absolute path indicators
+	if filepath.IsAbs(filename) {
+		return false
+	}
+
+	// Additional security: only allow alphanumeric, dots, underscores, and hyphens
+	// This is stricter than the general filename regex
+	validGeofilePattern := `^[a-zA-Z0-9._-]+\.dat$`
+	matched, _ := regexp.MatchString(validGeofilePattern, filename)
+	return matched
+}
+
 func (s *ServerService) UpdateGeofile(fileName string) error {
 	files := []struct {
 		URL      string
@@ -769,12 +799,78 @@ func (s *ServerService) UpdateGeofile(fileName string) error {
 		{"https://github.com/runetfreedom/russia-v2ray-rules-dat/releases/latest/download/geosite.dat", "geosite_RU.dat"},
 	}
 
+	// Strict allowlist check to avoid writing uncontrolled files
+	if fileName != "" {
+		// Use the centralized validation function
+		if !s.IsValidGeofileName(fileName) {
+			return common.NewErrorf("Invalid geofile name: contains unsafe path characters: %s", fileName)
+		}
+
+		// Ensure the filename matches exactly one from our allowlist
+		isAllowed := false
+		for _, file := range files {
+			if fileName == file.FileName {
+				isAllowed = true
+				break
+			}
+		}
+		if !isAllowed {
+			return common.NewErrorf("Invalid geofile name: %s not in allowlist", fileName)
+		}
+	}
+
 	downloadFile := func(url, destPath string) error {
-		resp, err := http.Get(url)
+		var req *http.Request
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			return common.NewErrorf("Failed to create HTTP request for %s: %v", url, err)
+		}
+
+		var localFileModTime time.Time
+		if fileInfo, err := os.Stat(destPath); err == nil {
+			localFileModTime = fileInfo.ModTime()
+			if !localFileModTime.IsZero() {
+				req.Header.Set("If-Modified-Since", localFileModTime.UTC().Format(http.TimeFormat))
+			}
+		}
+
+		client := &http.Client{}
+		resp, err := client.Do(req)
 		if err != nil {
 			return common.NewErrorf("Failed to download Geofile from %s: %v", url, err)
 		}
 		defer resp.Body.Close()
+
+		// Parse Last-Modified header from server
+		var serverModTime time.Time
+		serverModTimeStr := resp.Header.Get("Last-Modified")
+		if serverModTimeStr != "" {
+			parsedTime, err := time.Parse(http.TimeFormat, serverModTimeStr)
+			if err != nil {
+				logger.Warningf("Failed to parse Last-Modified header for %s: %v", url, err)
+			} else {
+				serverModTime = parsedTime
+			}
+		}
+
+		// Function to update local file's modification time
+		updateFileModTime := func() {
+			if !serverModTime.IsZero() {
+				if err := os.Chtimes(destPath, serverModTime, serverModTime); err != nil {
+					logger.Warningf("Failed to update modification time for %s: %v", destPath, err)
+				}
+			}
+		}
+
+		// Handle 304 Not Modified
+		if resp.StatusCode == http.StatusNotModified {
+			updateFileModTime()
+			return nil
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			return common.NewErrorf("Failed to download Geofile from %s: received status code %d", url, resp.StatusCode)
+		}
 
 		file, err := os.Create(destPath)
 		if err != nil {
@@ -787,6 +883,7 @@ func (s *ServerService) UpdateGeofile(fileName string) error {
 			return common.NewErrorf("Failed to save Geofile %s: %v", destPath, err)
 		}
 
+		updateFileModTime()
 		return nil
 	}
 
@@ -794,8 +891,8 @@ func (s *ServerService) UpdateGeofile(fileName string) error {
 
 	if fileName == "" {
 		for _, file := range files {
-			destPath := fmt.Sprintf("%s/%s", config.GetBinFolderPath(), file.FileName)
-
+			// Sanitize the filename from our allowlist as an extra precaution
+			destPath := filepath.Join(config.GetBinFolderPath(), filepath.Base(file.FileName))
 			if err := downloadFile(file.URL, destPath); err != nil {
 				errorMessages = append(errorMessages, fmt.Sprintf("Error downloading Geofile '%s': %v", file.FileName, err))
 			}
