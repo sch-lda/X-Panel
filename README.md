@@ -40,5 +40,5 @@
 
    使用1panel进入容器shell，重置密码
    ```sh
-   /usr/bin/x-ui setting -username 用户名 -password 密码
+   /app/x-ui setting -username 用户名 -password 密码
    ```
