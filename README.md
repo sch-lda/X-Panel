@@ -38,7 +38,7 @@
 
    默认端口 13688
 
-   使用1panel进入容器shell，重置密码
    ```sh
-   /usr/bin/x-ui setting -username 用户名 -password 密码
+   docker exec -it x-ui-test /bin/sh
+   /app/x-ui setting -username 用户名 -password 密码
    ```
