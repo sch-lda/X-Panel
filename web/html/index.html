@@ -169,24 +169,13 @@
     .running-animation .ant-badge-status-dot { animation: runningAnimation 1.2s linear infinite; }
     @keyframes runningAnimation { 0%,50%,100% {transform: scale(1);opacity: 1;} 10% {transform: scale(1.5);opacity: .2;} }
 
-    /* === X-Panel LOGO 炫酷效果样式 (保留) === */
-    @keyframes neonGlow {
-        0%, 100% {
-            text-shadow: 0 0 5px #00aaff, 0 0 10px #00aaff, 0 0 20px #00aaff, 0 0 40px #00aaff;
-        }
-        50% {
-            text-shadow: 0 0 10px #ff0077, 0 0 20px #ff0077, 0 0 40px #ff0077, 0 0 80px #ff0077;
-        }
-    }
-
+    /* === X-Panel LOGO 标准样式 === */
     .x-panel-logo-text {
         font-size: 3rem; 
         font-weight: 900;
         margin: 0;
-        color: #fff; 
         text-transform: capitalize;
         letter-spacing: 2px;
-        animation: neonGlow 5s ease-in-out infinite alternate;
         text-align: center;
         line-height: 1.2;
     }
