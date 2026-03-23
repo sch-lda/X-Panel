@@ -1,24 +1,6 @@
 {{ template "page/head_start" .}}
 <style id="cool-theme-styles">
 
-    /* 【通用】动态流光背景，作为所有主题的底色，增加炫酷感 */
-    body {
-        background: linear-gradient(-45deg, #EB5C20, #ABA0D9, #23a6d5, #23d5ab, #F0C9CF, #A9CD71, #00ffff);
-        background-size: 400% 400%;
-        animation: gradientBG 15s ease infinite;
-    }
-
-    @keyframes gradientBG {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-    }
-
-    /* 【通用】让内容区透明，以透出动态背景 */
-    #app, .ant-layout, .ant-layout-content {
-        background: transparent !important;
-    }
-
     /* ==================================================================
        核心修正 1：顶部间距 (10px) - (保持不变)
        ================================================================== */
